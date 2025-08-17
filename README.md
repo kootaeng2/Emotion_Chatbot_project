@@ -22,7 +22,7 @@
 
 ## 🖥️ 프로젝트 데모 (Demo)
 
-![프로젝트 실행 예시](demo.gif)
+임시 홈페이지(https://kootaeng2.github.io/Emotion_Chatbot_project/templates/emotion_homepage.html)
 
 <br>
 
@@ -107,4 +107,5 @@ python app.py
 | :--- | :---: |
 | **Accuracy** (정확도) | **85.3%** |
 | **F1-Score** (Weighted)| **0.852** |
+
 
