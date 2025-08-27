@@ -1,32 +1,38 @@
-# emotion_engine.py
-# 감정 분석 엔진 모듈
+# emotion_engine.py (최종 수정 완료 - 수동 로드 버전)
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
+import os
 
 def load_emotion_classifier():
     """
-    훈련된 감정 분석 모델과 파이셔플라인을 불러와 준비하는 함수.
-    이 함수는 서버가 시작될 때 딱 한 번만 호출됩니다.
+    수동으로 다운로드한 로컬 폴더에서, 훈련된 감정 분석 모델을 불러와 준비하는 함수.
     """
-    # 훈련된 모델이 저장된 최종 경로
-    MODEL_PATH = 'E:/sentiment_analysis_project/results/checkpoint-9681' 
+    # ---!!! 1. 우리가 직접 다운로드한 파일들을 넣어둔 로컬 폴더 경로를 사용합니다 !!!---
+    MODEL_PATH = "E:/sentiment_analysis_project/my-local-model"
     
+    print(f"로컬 경로 '{MODEL_PATH}'에서 모델을 불러옵니다...")
     try:
-        model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
+        # 2. 해당 경로가 실제로 존재하는지 확인합니다.
+        if not os.path.isdir(MODEL_PATH):
+            print(f"❌ 경로에 폴더가 존재하지 않습니다! '{MODEL_PATH}' 폴더를 만들고 그 안에 모델 파일들을 모두 다운로드했는지 확인해주세요.")
+            return None
+
+        # 3. 이 로컬 경로에서 토크나이저와 모델을 불러옵니다.
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-    except OSError:
-        print(f"❌ 해당 경로에 모델이 없습니다: {MODEL_PATH}")
+        model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
+        print("✅ 로컬 모델 파일 로딩 성공!")
+        
+    except Exception as e:
+        print(f"❌ 모델 또는 토크나이저를 불러오는 중 오류가 발생했습니다: {e}")
         return None
 
-    # GPU 사용 설정
+    # 4. GPU 사용 설정 및 파이프라인 생성 (이하 코드는 동일)
     device = 0 if torch.cuda.is_available() else -1
-    
-    # 파이프라인 생성
     emotion_classifier = pipeline(
-        "text-classification", 
-        model=model, 
-        tokenizer=tokenizer, 
+        "text-classification",
+        model=model,
+        tokenizer=tokenizer,
         device=device
     )
     
@@ -35,11 +41,11 @@ def load_emotion_classifier():
 def predict_emotion(classifier, text):
     """
     준비된 파이프라인(classifier)과 텍스트를 받아 감정을 예측하는 함수.
-    이 함수는 사용자가 메시지를 보낼 때마다 호출됩니다.
     """
-    if not text.strip():
-        return "내용 없음" # 빈 텍스트 처리
+    if not text or not text.strip():
+        return "내용 없음"
+    if classifier is None:
+        return "오류: 감정 분석 엔진이 준비되지 않았습니다."
         
     result = classifier(text)
-    # 결과에서 감정 라벨만 추출하여 반환 (예: '기쁨')
     return result[0]['label']
