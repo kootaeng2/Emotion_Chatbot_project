@@ -1,4 +1,4 @@
-#  train_model.py
+# train_model.py
 # AI 모델을 훈련하는 스크립트, 다시 사용가능한 삭제 x
 
 import pandas as pd
