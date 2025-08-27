@@ -1,51 +1,46 @@
-# emotion_engine.py (최종 수정 완료 - 수동 로드 버전)
+# emotion_engine.py
 
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 import os
 
 def load_emotion_classifier():
-    """
-    수동으로 다운로드한 로컬 폴더에서, 훈련된 감정 분석 모델을 불러와 준비하는 함수.
-    """
-    # ---!!! 1. 우리가 직접 다운로드한 파일들을 넣어둔 로컬 폴더 경로를 사용합니다 !!!---
-    MODEL_PATH = "E:/sentiment_analysis_project/my-local-model"
+    # 현재 스크립트 파일의 디렉터리 경로를 가져옵니다.
+    base_path = os.path.dirname(os.path.abspath(__file__))
     
-    print(f"로컬 경로 '{MODEL_PATH}'에서 모델을 불러옵니다...")
+    # 모델 폴더의 절대 경로를 만듭니다.
+    MODEL_PATH = os.path.join(base_path, "korean-emotion-classifier-final")
+    
+    # 경로가 로컬 디렉터리인지 확인
+    if not os.path.isdir(MODEL_PATH):
+        print(f"❌ 오류: 지정된 경로 '{MODEL_PATH}'에 모델 폴더가 존재하지 않습니다.")
+        return None
+        
+    print(f"--- 최종 모델 경로 확인: [{MODEL_PATH}] ---")
+    print(f"로컬 절대 경로 '{MODEL_PATH}'에서 모델을 직접 불러옵니다...")
+    
     try:
-        # 2. 해당 경로가 실제로 존재하는지 확인합니다.
-        if not os.path.isdir(MODEL_PATH):
-            print(f"❌ 경로에 폴더가 존재하지 않습니다! '{MODEL_PATH}' 폴더를 만들고 그 안에 모델 파일들을 모두 다운로드했는지 확인해주세요.")
-            return None
-
-        # 3. 이 로컬 경로에서 토크나이저와 모델을 불러옵니다.
+        # 1. from_pretrained()에 절대 경로를 직접 전달합니다.
+        # 2. `local_files_only=True`는 제거합니다. 라이브러리가 자동으로 인식합니다.
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
         model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
-        print("✅ 로컬 모델 파일 로딩 성공!")
         
-    except Exception as e:
-        print(f"❌ 모델 또는 토크나이저를 불러오는 중 오류가 발생했습니다: {e}")
-        return None
+        print("✅ 로컬 모델 파일 직접 로딩 성공!")
 
-    # 4. GPU 사용 설정 및 파이프라인 생성 (이하 코드는 동일)
+    except Exception as e:
+        print(f"❌ 모델 로딩 중 오류: {e}")
+        # 오류가 발생한 원인을 정확히 출력합니다.
+        print(f"상세 오류 메시지: {e}")
+        return None
+    
     device = 0 if torch.cuda.is_available() else -1
-    emotion_classifier = pipeline(
-        "text-classification",
-        model=model,
-        tokenizer=tokenizer,
-        device=device
-    )
+    emotion_classifier = pipeline("text-classification", model=model, tokenizer=tokenizer, device=device)
     
     return emotion_classifier
 
+# predict_emotion 함수는 그대로 둡니다.
 def predict_emotion(classifier, text):
-    """
-    준비된 파이프라인(classifier)과 텍스트를 받아 감정을 예측하는 함수.
-    """
-    if not text or not text.strip():
-        return "내용 없음"
-    if classifier is None:
-        return "오류: 감정 분석 엔진이 준비되지 않았습니다."
-        
+    if not text or not text.strip(): return "내용 없음"
+    if classifier is None: return "오류: 감정 분석 엔진 준비 안됨."
     result = classifier(text)
     return result[0]['label']
