@@ -5,6 +5,7 @@ colorFrom: indigo
 colorTo: blue
 sdk: docker
 app_port: 7860
+pinned: false
 ---
 
 # 🤖 일기 기반 감정 분석 및 콘텐츠 추천 웹 애플리케이션
